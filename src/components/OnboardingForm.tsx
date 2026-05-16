@@ -4,35 +4,33 @@ import React, { useState, useRef } from "react";
 
 /* ─── Types ─────────────────────────────────────────────────────── */
 interface FormData {
-  // Step 1 – GHL
   ghlApiKey: string;
   ghlSnapshotId: string;
-  // Step 2 – Drive
   onboardingDocUrl: string;
   masterTrackerUrl: string;
-  // Step 3 – Team
   setterNames: string[];
   csmSetup: "sam_only" | "multiple" | "";
   canvaReady: "yes" | "no" | "";
-  canvaEmail: string;
   showRateThreshold: string;
 }
 
 const TOTAL_STEPS = 3;
-const STEP_LABELS = ["GHL Access", "Drive", "Team"];
+const STEP_LABELS = ["GHL Access", "Drive", "Team & Setup"];
+const PPM_EMAIL = "kierandeclanredpath@gmail.com";
 
 /* ─── Main component ─────────────────────────────────────────────── */
 export default function OnboardingForm() {
-  const [step, setStep]         = useState(0);
-  const [stepKey, setStepKey]   = useState(0);
-  const [dir, setDir]           = useState<"right" | "left">("right");
+  const [step, setStep]       = useState(0);
+  const [stepKey, setStepKey] = useState(0);
+  const [dir, setDir]         = useState<"right" | "left">("right");
   const [submitting, setSubmitting] = useState(false);
-  const [done, setDone]         = useState(false);
+
+  const formAreaRef = useRef<HTMLDivElement>(null);
 
   const [data, setData] = useState<FormData>({
     ghlApiKey: "", ghlSnapshotId: "",
     onboardingDocUrl: "", masterTrackerUrl: "",
-    setterNames: [], csmSetup: "", canvaReady: "", canvaEmail: "",
+    setterNames: [], csmSetup: "", canvaReady: "",
     showRateThreshold: "",
   });
 
@@ -44,7 +42,10 @@ export default function OnboardingForm() {
     setDir(direction);
     setStepKey(k => k + 1);
     setStep(toStep);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    // Scroll to top of form area, not top of page
+    setTimeout(() => {
+      formAreaRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 10);
   }
 
   function canAdvance(): boolean {
@@ -57,350 +58,414 @@ export default function OnboardingForm() {
   async function handleSubmit() {
     if (!canAdvance()) return;
     setSubmitting(true);
-    // Simulate submit (replace with real fetch to your endpoint)
     await new Promise(r => setTimeout(r, 900));
     setSubmitting(false);
-    setDone(true);
     go(4, "right");
   }
 
+  const showSidebarSteps = step >= 1 && step <= TOTAL_STEPS;
+
   return (
-    <main className="page">
+    <main className="layout">
 
-      {/* Wordmark */}
-      <div className="wordmark">
-        <div className="wordmark-mark" aria-hidden="true" />
-        <span className="wordmark-text">Power Performance Marketing</span>
-      </div>
+      {/* ── Sidebar (desktop only) ── */}
+      <aside className="sidebar">
+        <div className="wordmark">
+          <div className="wordmark-mark" aria-hidden="true" />
+          <span className="wordmark-text">Power Performance Marketing</span>
+        </div>
 
-      {/* ── Welcome (step 0) ── */}
-      {step === 0 && (
-        <div key={stepKey} className={`is-entering-${dir}`}>
-          <p className="page-eyebrow">Pre-build setup</p>
-          <h1 className="page-title">System<br />setup.</h1>
-          <p className="page-sub">
-            We&apos;ve pulled what we can from your SOP. This covers the handful of things
-            only you can give us. Under 10 minutes.
-          </p>
+        <p className="sidebar-eyebrow">Pre-build setup</p>
+        <h1 className="sidebar-title">System<br />setup.</h1>
+        <p className="sidebar-sub">
+          We&apos;ve pulled what we can from your SOP. This covers the handful of things
+          only you can give us. Under 10 minutes.
+        </p>
 
-          <div className="overview-grid" style={{ marginTop: 32 }}>
-            {[
-              { n: "01", label: "GHL Access",   time: "~2 min" },
-              { n: "02", label: "Drive",         time: "~2 min" },
-              { n: "03", label: "Team & Setup",  time: "~5 min" },
-            ].map(s => (
-              <div className="overview-cell" key={s.n} style={{ gridColumn: s.n === "03" ? "span 2" : undefined }}>
-                <span className="overview-step">{s.n} · {s.time}</span>
-                <span className="overview-label">{s.label}</span>
-              </div>
-            ))}
+        {showSidebarSteps && (
+          <div className="sidebar-steps">
+            {STEP_LABELS.map((label, i) => {
+              const sn      = i + 1;
+              const isDone   = sn < step;
+              const isActive = sn === step;
+              return (
+                <div
+                  key={sn}
+                  className={`sidebar-step${isActive ? " is-active" : ""}${isDone ? " is-done" : ""}`}
+                >
+                  <span className="sidebar-step-num">{String(sn).padStart(2, "0")}</span>
+                  <span className="sidebar-step-label">{label}</span>
+                  <span className="sidebar-step-tick" aria-hidden="true">
+                    {isDone && <CheckIcon />}
+                  </span>
+                </div>
+              );
+            })}
           </div>
+        )}
+      </aside>
 
-          <div style={{ marginTop: 32 }}>
-            <button className="btn btn-primary" onClick={() => go(1, "right")}>
-              Start
-              <ArrowRight />
-            </button>
+      {/* ── Form area ── */}
+      <div className="form-area" ref={formAreaRef}>
+
+        {/* Mobile wordmark */}
+        <div className="mobile-wordmark">
+          <div className="wordmark">
+            <div className="wordmark-mark" aria-hidden="true" />
+            <span className="wordmark-text">Power Performance Marketing</span>
           </div>
         </div>
-      )}
 
-      {/* ── Stepper (steps 1–3) ── */}
-      {step >= 1 && step <= TOTAL_STEPS && (
-        <nav className="stepper" aria-label="Form steps">
-          {STEP_LABELS.map((label, i) => {
-            const sn      = i + 1;
-            const isDone   = sn < step;
-            const isActive = sn === step;
-            return (
-              <React.Fragment key={sn}>
-                <div className={`step-item${isActive ? " is-active" : ""}${isDone ? " is-done" : ""}`}>
-                  <div className="step-circle">
-                    {isDone
-                      ? <CheckIcon />
-                      : String(sn).padStart(2, "0")}
+        {/* Mobile stepper (steps 1–3 only) */}
+        {step >= 1 && step <= TOTAL_STEPS && (
+          <nav className="mobile-stepper" aria-label="Form steps">
+            {STEP_LABELS.map((label, i) => {
+              const sn      = i + 1;
+              const isDone   = sn < step;
+              const isActive = sn === step;
+              return (
+                <React.Fragment key={sn}>
+                  <div className={`step-item${isActive ? " is-active" : ""}${isDone ? " is-done" : ""}`}>
+                    <div className="step-circle">
+                      {isDone ? <CheckIcon /> : String(sn).padStart(2, "0")}
+                    </div>
+                    <span className="step-label">{label}</span>
                   </div>
-                  <span className="step-label">{label}</span>
+                  {sn < TOTAL_STEPS && (
+                    <div className="step-gap">
+                      <div className="step-gap-fill" style={{ width: isDone ? "100%" : "0%" }} />
+                    </div>
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </nav>
+        )}
+
+        {/* ── Single animated container for ALL step content ── */}
+        <div key={stepKey} className={`is-entering-${dir}`}>
+
+          {/* Step 0 – Welcome */}
+          {step === 0 && (
+            <div>
+              <p className="page-eyebrow">Pre-build setup</p>
+              <h2 className="page-title">System<br />setup.</h2>
+              <p className="page-sub">
+                We&apos;ve pulled what we can from your SOP. This covers the handful of things
+                only you can give us. Under 10 minutes.
+              </p>
+
+              <div className="overview-grid">
+                {[
+                  { n: "01", label: "GHL Access",   time: "~2 min" },
+                  { n: "02", label: "Drive",         time: "~2 min" },
+                  { n: "03", label: "Team & Setup",  time: "~5 min" },
+                ].map(s => (
+                  <div
+                    className="overview-cell"
+                    key={s.n}
+                    style={{ gridColumn: s.n === "03" ? "span 2" : undefined }}
+                  >
+                    <span className="overview-step">{s.n} · {s.time}</span>
+                    <span className="overview-label">{s.label}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ marginTop: 32 }}>
+                <button className="btn btn-primary" onClick={() => go(1, "right")}>
+                  Start <ArrowRight />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Step 1 – GHL Access */}
+          {step === 1 && (
+            <div>
+              <p className="step-eyebrow">Step 01</p>
+              <h2 className="step-title">GHL Access</h2>
+              <p className="step-sub">Agency-level keys only — not a sub-account key.</p>
+
+              <div className="fields">
+                <div className="callout">
+                  <p>
+                    <strong>Agency API key:</strong> GHL → Agency View → Settings → API Keys → Create new key.<br />
+                    <strong>Snapshot ID:</strong> Agency View → Account Snapshots → ⋯ → Copy Snapshot ID.
+                  </p>
                 </div>
-                {sn < TOTAL_STEPS && (
-                  <div className="step-gap">
-                    <div className="step-gap-fill" style={{ width: isDone ? "100%" : "0%" }} />
-                  </div>
-                )}
-              </React.Fragment>
-            );
-          })}
-        </nav>
-      )}
 
-      {/* ── Step panels ── */}
-      <div key={stepKey} className={`is-entering-${dir}`}>
-
-        {/* Step 1 – GHL */}
-        {step === 1 && (
-          <div>
-            <p className="step-eyebrow">Step 01</p>
-            <h2 className="step-title">GHL Access</h2>
-            <p className="step-sub">Agency-level keys only — not a sub-account key.</p>
-
-            <div className="fields">
-              <div className="callout">
-                <p>
-                  <strong>Agency API key:</strong> GHL → Agency View → Settings → API Keys → Create new key.<br />
-                  <strong>Snapshot ID:</strong> Agency View → Account Snapshots → ⋯ → Copy Snapshot ID.
-                </p>
-              </div>
-
-              <Field label="Agency API Key" required>
-                <input
-                  className="ppm-input mono"
-                  type="password"
-                  placeholder="sk-••••••••••••••••••••"
-                  autoComplete="off"
-                  autoFocus
-                  value={data.ghlApiKey}
-                  onChange={e => set("ghlApiKey", e.target.value)}
-                />
-                <span className="help">Agency-level only — not a sub-account key.</span>
-              </Field>
-
-              <Field label="Snapshot ID" required>
-                <input
-                  className="ppm-input mono"
-                  type="text"
-                  placeholder="xxxxxxxxxxxxxxxxxxxxxxxx"
-                  value={data.ghlSnapshotId}
-                  onChange={e => set("ghlSnapshotId", e.target.value)}
-                />
-                <span className="help">Applied to every new client sub-account.</span>
-              </Field>
-            </div>
-
-            <div className="nav">
-              <span />
-              <button
-                className="btn btn-primary"
-                onClick={() => go(2, "right")}
-                disabled={!canAdvance()}
-              >
-                Continue <ArrowRight />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Step 2 – Drive */}
-        {step === 2 && (
-          <div>
-            <p className="step-eyebrow">Step 02</p>
-            <h2 className="step-title">Drive</h2>
-            <p className="step-sub">Template files that get duplicated for every new client.</p>
-
-            <div className="fields">
-              <div className="callout">
-                <p>
-                  Open each file → Share → Copy link. Full URL starting with{" "}
-                  <code>docs.google.com/...</code>
-                </p>
-              </div>
-
-              <Field label="Onboarding Document Template" required>
-                <input
-                  className="ppm-input"
-                  type="url"
-                  placeholder="https://docs.google.com/document/d/..."
-                  value={data.onboardingDocUrl}
-                  onChange={e => set("onboardingDocUrl", e.target.value)}
-                  autoFocus
-                />
-                <span className="help">Copied and renamed to the client&apos;s business name on sign.</span>
-              </Field>
-
-              <Field label="Master Client Tracking Sheet" required>
-                <input
-                  className="ppm-input"
-                  type="url"
-                  placeholder="https://docs.google.com/spreadsheets/d/..."
-                  value={data.masterTrackerUrl}
-                  onChange={e => set("masterTrackerUrl", e.target.value)}
-                />
-                <span className="help">A new row appends automatically when a client signs.</span>
-              </Field>
-            </div>
-
-            <div className="nav">
-              <button className="btn btn-ghost" onClick={() => go(1, "left")}>
-                <ArrowLeft /> Back
-              </button>
-              <button
-                className="btn btn-primary"
-                onClick={() => go(3, "right")}
-                disabled={!canAdvance()}
-              >
-                Continue <ArrowRight />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Step 3 – Team & Setup */}
-        {step === 3 && (
-          <div>
-            <p className="step-eyebrow">Step 03</p>
-            <h2 className="step-title">Team &<br />Setup</h2>
-            <p className="step-sub">Setters, CSM assignment, and Canva template prep.</p>
-
-            <div className="fields">
-
-              {/* Setter chip input */}
-              <Field label="Setter Names" required>
-                <ChipInput
-                  value={data.setterNames}
-                  onChange={v => set("setterNames", v)}
-                />
-                <span className="help">
-                  Add one at a time. These populate the setter dropdown on the Calendly booking form.
-                </span>
-              </Field>
-
-              {/* CSM */}
-              <div>
-                <div className="sep" style={{ margin: "4px 0 12px" }}>Client Success Manager</div>
-                <Field label="Who is assigned as CSM on each new client?" required>
-                  <div className="opts-row">
-                    <OptCard
-                      selected={data.csmSetup === "sam_only"}
-                      onClick={() => set("csmSetup", "sam_only")}
-                      title="Just you"
-                      sub="All clients default to Sam"
-                    />
-                    <OptCard
-                      selected={data.csmSetup === "multiple"}
-                      onClick={() => set("csmSetup", "multiple")}
-                      title="Varies per client"
-                      sub="Closer picks when submitting the new client form"
-                    />
-                  </div>
-                </Field>
-              </div>
-
-              {/* Canva */}
-              <div>
-                <div className="sep" style={{ margin: "4px 0 12px" }}>Canva</div>
-                <Field label="Named variable fields added to your cover photo template?" required>
-                  <div className="callout" style={{ marginBottom: 8 }}>
-                    <p>
-                      Open your template → select the text that changes per client → replace it
-                      with <code>{"{{business_name}}"}</code>. ~10 minutes, once only.
-                    </p>
-                  </div>
-                  <div className="opts-row">
-                    <OptCard
-                      selected={data.canvaReady === "yes"}
-                      onClick={() => set("canvaReady", "yes")}
-                      title="Done"
-                      sub="Variables are in the template"
-                    />
-                    <OptCard
-                      selected={data.canvaReady === "no"}
-                      onClick={() => set("canvaReady", "no")}
-                      title="Not yet"
-                      sub="I'll need a walkthrough"
-                    />
-                  </div>
-                </Field>
-              </div>
-
-              <Field label="Canva Account Email" badge="Optional">
-                <input
-                  className="ppm-input"
-                  type="email"
-                  placeholder="you@example.com"
-                  value={data.canvaEmail}
-                  onChange={e => set("canvaEmail", e.target.value)}
-                />
-                <span className="help">
-                  We&apos;ll request editor access on this account before the build starts.
-                </span>
-              </Field>
-
-              {/* Dashboard */}
-              <div>
-                <div className="sep" style={{ margin: "4px 0 12px" }}>Dashboard</div>
-                <Field label="Flag setters below this show rate" badge="Optional">
+                <Field label="Agency API Key" required>
                   <input
-                    className="ppm-input"
-                    type="number"
-                    placeholder="50"
-                    min={1}
-                    max={100}
-                    style={{ maxWidth: 100 }}
-                    value={data.showRateThreshold}
-                    onChange={e => set("showRateThreshold", e.target.value)}
+                    className="ppm-input mono"
+                    type="password"
+                    placeholder="sk-••••••••••••••••••••"
+                    autoComplete="off"
+                    autoFocus
+                    value={data.ghlApiKey}
+                    onChange={e => set("ghlApiKey", e.target.value)}
                   />
-                  <span className="help">Percentage. Defaults to 50% — adjustable after launch.</span>
+                  <span className="help">Agency-level only — not a sub-account key.</span>
+                </Field>
+
+                <Field label="Snapshot ID" required>
+                  <input
+                    className="ppm-input mono"
+                    type="text"
+                    placeholder="xxxxxxxxxxxxxxxxxxxxxxxx"
+                    value={data.ghlSnapshotId}
+                    onChange={e => set("ghlSnapshotId", e.target.value)}
+                  />
+                  <span className="help">Applied to every new client sub-account.</span>
                 </Field>
               </div>
 
-            </div>
-
-            <div className="nav">
-              <button className="btn btn-ghost" onClick={() => go(2, "left")}>
-                <ArrowLeft /> Back
-              </button>
-              <div className="nav-end">
+              <div className="nav">
+                <span />
                 <button
                   className="btn btn-primary"
-                  onClick={handleSubmit}
-                  disabled={!canAdvance() || submitting}
+                  onClick={() => go(2, "right")}
+                  disabled={!canAdvance()}
                 >
-                  {submitting
-                    ? <><span className="spin" aria-hidden="true" /> Sending…</>
-                    : <>Send to build team <ArrowRight /></>}
+                  Continue <ArrowRight />
                 </button>
-                <span className="nav-hint">Reviewed within 24 hours</span>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Success */}
-        {step === 4 && (
-          <div>
-            <p className="page-eyebrow">Complete</p>
-            <h2 className="success-title">We&apos;ll take it<br />from here.</h2>
-            <p className="success-sub">
-              We&apos;ll review what you&apos;ve sent and be in touch within 24 hours to
-              confirm everything before starting the build.
-            </p>
-            <div className="success-rows">
-              <div className="success-row">
-                <span className="success-row-num">01</span>
-                <p>
-                  <strong>First up:</strong> GHL sub-account structure, setter routing on
-                  Calendly, and Google Drive client folder automation.
-                </p>
+          {/* Step 2 – Drive */}
+          {step === 2 && (
+            <div>
+              <p className="step-eyebrow">Step 02</p>
+              <h2 className="step-title">Drive</h2>
+              <p className="step-sub">Template files that get duplicated for every new client.</p>
+
+              <div className="fields">
+                <div className="callout">
+                  <p>
+                    Open each file → Share → Copy link. Full URL starting with{" "}
+                    <code>docs.google.com/...</code>
+                  </p>
+                </div>
+
+                <Field label="Onboarding Document Template" required>
+                  <input
+                    className="ppm-input"
+                    type="url"
+                    placeholder="https://docs.google.com/document/d/..."
+                    value={data.onboardingDocUrl}
+                    onChange={e => set("onboardingDocUrl", e.target.value)}
+                    autoFocus
+                  />
+                  <span className="help">Copied and renamed to the client&apos;s business name on sign.</span>
+                </Field>
+
+                <Field label="Master Client Tracking Sheet" required>
+                  <input
+                    className="ppm-input"
+                    type="url"
+                    placeholder="https://docs.google.com/spreadsheets/d/..."
+                    value={data.masterTrackerUrl}
+                    onChange={e => set("masterTrackerUrl", e.target.value)}
+                  />
+                  <span className="help">A new row appends automatically when a client signs.</span>
+                </Field>
               </div>
-              <div className="success-row">
-                <span className="success-row-num">02</span>
-                <p>
-                  <strong>Then:</strong> Dashboard build begins. We&apos;ll share a preview
-                  link before going live.
-                </p>
-              </div>
-              <div className="success-row">
-                <span className="success-row-num">03</span>
-                <p>
-                  If anything needs updating, reply to the confirmation email and we&apos;ll
-                  adjust before starting.
-                </p>
+
+              <div className="nav">
+                <button className="btn btn-ghost" onClick={() => go(1, "left")}>
+                  <ArrowLeft /> Back
+                </button>
+                <button
+                  className="btn btn-primary"
+                  onClick={() => go(3, "right")}
+                  disabled={!canAdvance()}
+                >
+                  Continue <ArrowRight />
+                </button>
               </div>
             </div>
-          </div>
-        )}
+          )}
+
+          {/* Step 3 – Team & Setup */}
+          {step === 3 && (
+            <div>
+              <p className="step-eyebrow">Step 03</p>
+              <h2 className="step-title">Team &<br />Setup</h2>
+              <p className="step-sub">Setters, CSM assignment, and Canva template prep.</p>
+
+              <div className="fields">
+
+                <Field label="Setter Names" required>
+                  <ChipInput
+                    value={data.setterNames}
+                    onChange={v => set("setterNames", v)}
+                  />
+                  <span className="help">
+                    Add one at a time. These populate the setter dropdown on the Calendly booking form.
+                  </span>
+                </Field>
+
+                <div>
+                  <div className="sep" style={{ margin: "4px 0 12px" }}>Client Success Manager</div>
+                  <Field label="Who is assigned as CSM on each new client?" required>
+                    <div className="opts-row">
+                      <OptCard
+                        selected={data.csmSetup === "sam_only"}
+                        onClick={() => set("csmSetup", "sam_only")}
+                        title="Just you"
+                        sub="All clients default to Sam"
+                      />
+                      <OptCard
+                        selected={data.csmSetup === "multiple"}
+                        onClick={() => set("csmSetup", "multiple")}
+                        title="Varies per client"
+                        sub="Closer picks when submitting the new client form"
+                      />
+                    </div>
+                  </Field>
+                </div>
+
+                <div>
+                  <div className="sep" style={{ margin: "4px 0 12px" }}>Canva</div>
+                  <Field label="Named variable fields added to your cover photo template?" required>
+                    <div className="callout" style={{ marginBottom: 8 }}>
+                      <p>
+                        Open your template → select the text that changes per client → replace it
+                        with <code>{"{{business_name}}"}</code>. ~10 minutes, once only.
+                      </p>
+                    </div>
+                    <div className="opts-row">
+                      <OptCard
+                        selected={data.canvaReady === "yes"}
+                        onClick={() => set("canvaReady", "yes")}
+                        title="Done"
+                        sub="Variables are in the template"
+                      />
+                      <OptCard
+                        selected={data.canvaReady === "no"}
+                        onClick={() => set("canvaReady", "no")}
+                        title="Not yet"
+                        sub="I'll need a walkthrough"
+                      />
+                    </div>
+                  </Field>
+
+                  <div style={{ marginTop: 12 }}>
+                    <CanvaEmailCallout email={PPM_EMAIL} />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="sep" style={{ margin: "4px 0 12px" }}>Dashboard</div>
+                  <Field label="Flag setters below this show rate" badge="Optional">
+                    <input
+                      className="ppm-input"
+                      type="number"
+                      placeholder="50"
+                      min={1}
+                      max={100}
+                      style={{ maxWidth: 100 }}
+                      value={data.showRateThreshold}
+                      onChange={e => set("showRateThreshold", e.target.value)}
+                    />
+                    <span className="help">Percentage. Defaults to 50% — adjustable after launch.</span>
+                  </Field>
+                </div>
+
+              </div>
+
+              <div className="nav">
+                <button className="btn btn-ghost" onClick={() => go(2, "left")}>
+                  <ArrowLeft /> Back
+                </button>
+                <div className="nav-end">
+                  <button
+                    className="btn btn-primary"
+                    onClick={handleSubmit}
+                    disabled={!canAdvance() || submitting}
+                  >
+                    {submitting
+                      ? <><span className="spin" aria-hidden="true" /> Sending…</>
+                      : <>Send to build team <ArrowRight /></>}
+                  </button>
+                  <span className="nav-hint">Reviewed within 24 hours</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Step 4 – Success */}
+          {step === 4 && (
+            <div>
+              <p className="page-eyebrow">Complete</p>
+              <h2 className="success-title">We&apos;ll take it<br />from here.</h2>
+              <p className="success-sub">
+                We&apos;ll review what you&apos;ve sent and be in touch within 24 hours to
+                confirm everything before starting the build.
+              </p>
+              <div className="success-rows">
+                <div className="success-row">
+                  <span className="success-row-num">01</span>
+                  <p>
+                    <strong>First up:</strong> GHL sub-account structure, setter routing on
+                    Calendly, and Google Drive client folder automation.
+                  </p>
+                </div>
+                <div className="success-row">
+                  <span className="success-row-num">02</span>
+                  <p>
+                    <strong>Then:</strong> Dashboard build begins. We&apos;ll share a preview
+                    link before going live.
+                  </p>
+                </div>
+                <div className="success-row">
+                  <span className="success-row-num">03</span>
+                  <p>
+                    If anything needs updating, reply to the confirmation email and we&apos;ll
+                    adjust before starting.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+        </div>
+        {/* end animated container */}
 
       </div>
+      {/* end form-area */}
+
     </main>
+  );
+}
+
+/* ─── Canva email callout ─────────────────────────────────────────── */
+function CanvaEmailCallout({ email }: { email: string }) {
+  const [copied, setCopied] = useState(false);
+
+  function copy() {
+    navigator.clipboard.writeText(email).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    });
+  }
+
+  return (
+    <div className="callout-email" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+      <p style={{ margin: 0 }}>
+        Add <code>{email}</code> as an editor to your Canva template.
+      </p>
+      <button
+        type="button"
+        onClick={copy}
+        className="btn btn-ghost"
+        style={{ height: 30, padding: "0 10px", fontSize: 12, flexShrink: 0 }}
+        aria-label="Copy email address"
+      >
+        {copied ? "Copied" : "Copy"}
+      </button>
+    </div>
   );
 }
 
@@ -441,7 +506,7 @@ function ChipInput({
   }
 
   return (
-    <div className="chip-wrap" onClick={() => inputRef.current?.focus()}>
+    <div className="chip-field" onClick={() => inputRef.current?.focus()}>
       {value.map((tag, i) => (
         <div className="chip" key={i} role="listitem">
           <span>{tag}</span>
