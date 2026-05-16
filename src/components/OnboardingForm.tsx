@@ -10,7 +10,6 @@ interface FormData {
   masterTrackerUrl: string;
   setterNames: string[];
   csmSetup: "sam_only" | "multiple" | "";
-  canvaReady: "yes" | "no" | "";
   showRateThreshold: string;
 }
 
@@ -30,7 +29,7 @@ export default function OnboardingForm() {
   const [data, setData] = useState<FormData>({
     ghlApiKey: "", ghlSnapshotId: "",
     onboardingDocUrl: "", masterTrackerUrl: "",
-    setterNames: [], csmSetup: "", canvaReady: "",
+    setterNames: [], csmSetup: "",
     showRateThreshold: "",
   });
 
@@ -51,7 +50,7 @@ export default function OnboardingForm() {
   function canAdvance(): boolean {
     if (step === 1) return !!data.ghlApiKey.trim() && !!data.ghlSnapshotId.trim();
     if (step === 2) return !!data.onboardingDocUrl.trim() && !!data.masterTrackerUrl.trim();
-    if (step === 3) return data.setterNames.length > 0 && !!data.csmSetup && !!data.canvaReady;
+    if (step === 3) return data.setterNames.length > 0 && !!data.csmSetup;
     return true;
   }
 
@@ -328,49 +327,37 @@ export default function OnboardingForm() {
 
                 <div>
                   <div className="sep" style={{ margin: "4px 0 12px" }}>Canva</div>
-                  <Field label="Named variable fields added to your cover photo template?" required>
-                    <div className="callout" style={{ marginBottom: 8 }}>
-                      <p>
-                        Open your template → select the text that changes per client → replace it
-                        with <code>{"{{business_name}}"}</code>. ~10 minutes, once only.
-                      </p>
-                    </div>
-                    <div className="opts-row">
-                      <OptCard
-                        selected={data.canvaReady === "yes"}
-                        onClick={() => set("canvaReady", "yes")}
-                        title="Done"
-                        sub="Variables are in the template"
-                      />
-                      <OptCard
-                        selected={data.canvaReady === "no"}
-                        onClick={() => set("canvaReady", "no")}
-                        title="Not yet"
-                        sub="I'll need a walkthrough"
-                      />
-                    </div>
-                  </Field>
-
-                  <div style={{ marginTop: 12 }}>
-                    <CanvaEmailCallout email={PPM_EMAIL} />
-                  </div>
+                  <CanvaEmailCallout email={PPM_EMAIL} />
                 </div>
 
                 <div>
                   <div className="sep" style={{ margin: "4px 0 12px" }}>Dashboard</div>
-                  <Field label="Flag setters below this show rate" badge="Optional">
-                    <input
-                      className="ppm-input"
-                      type="number"
-                      placeholder="50"
-                      min={1}
-                      max={100}
-                      style={{ maxWidth: 100 }}
-                      value={data.showRateThreshold}
-                      onChange={e => set("showRateThreshold", e.target.value)}
-                    />
-                    <span className="help">Percentage. Defaults to 50% — adjustable after launch.</span>
-                  </Field>
+                  <div className="dashboard-threshold">
+                    <div className="dashboard-threshold-label">
+                      <span>Show-rate alert threshold</span>
+                      <span className="badge">Optional</span>
+                    </div>
+                    <p className="dashboard-threshold-sub">
+                      Setters below this percentage will be flagged in the dashboard. Defaults to 50% and can be adjusted after launch.
+                    </p>
+                    <div className="threshold-options">
+                      {[
+                        { value: "25", label: "25%", sub: "Lenient" },
+                        { value: "50", label: "50%", sub: "Standard" },
+                        { value: "75", label: "75%", sub: "Strict" },
+                      ].map(opt => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          className={`threshold-btn${data.showRateThreshold === opt.value ? " selected" : ""}`}
+                          onClick={() => set("showRateThreshold", data.showRateThreshold === opt.value ? "" : opt.value)}
+                        >
+                          <span className="threshold-pct">{opt.label}</span>
+                          <span className="threshold-sub">{opt.sub}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
 
               </div>
