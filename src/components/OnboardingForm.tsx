@@ -58,7 +58,16 @@ export default function OnboardingForm() {
   async function handleSubmit() {
     if (!canAdvance()) return;
     setSubmitting(true);
-    await new Promise(r => setTimeout(r, 900));
+    try {
+      const res = await fetch("/api/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error("submit failed");
+    } catch {
+      // still advance — don't block the user on email failure
+    }
     setSubmitting(false);
     go(4, "right");
   }
