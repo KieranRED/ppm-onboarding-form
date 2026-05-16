@@ -3,428 +3,452 @@
 import { useState } from "react";
 
 interface FormData {
+  // Step 1 — Business Information
   businessName: string;
-  industry: string;
-  goals: string[];
-  runningAds: boolean | null;
-  currentSpend: string;
-  budget: string;
-  firstName: string;
-  lastName: string;
-  email: string;
+  address: string;
   phone: string;
+  businessHours: string;
   website: string;
+  facebookUrl: string;
+  instagramUrl: string;
+  country: "UK" | "US" | "";
+  // Step 2 — Facebook Business Manager
+  fbBmConfirmed: boolean;
+  // Step 3 — Offer & Marketing
+  offerName: string;
+  offerPrice: string;
+  offerDescription: string;
+  targetAudience: string;
+  marketingHistory: string;
+  monthlyRevenueTarget: string;
+  // Step 4 — A2P Information
+  legalBusinessName: string;
+  einOrRegNumber: string;
+  smsUseCase: string;
+  sampleMessage1: string;
+  sampleMessage2: string;
 }
 
-const INDUSTRIES = [
-  "E-commerce", "Real Estate", "Health & Fitness", "Food & Beverage",
-  "Professional Services", "Beauty & Wellness", "Tech & Software",
-  "Education", "Construction", "Other",
-];
+const TOTAL_STEPS = 4;
 
-const GOALS = [
-  "More Leads", "Brand Awareness", "Social Media Growth", "Google Ads",
-  "Meta Ads", "SEO", "Email Marketing", "Content Creation", "Website Design",
+const FB_BM_STEPS = [
+  "Go to business.facebook.com and log in",
+  "Click on your Business in the top left",
+  "Go to Business Settings → Users → Partners",
+  "Click 'Add' then choose 'Give a partner access to your assets'",
+  "Enter PPM's Business Manager ID: 123456789",
+  "Under 'Ad Accounts', select your ad account and toggle on 'Manage campaigns'",
+  "Click 'Save Changes' — you're done",
 ];
-
-const BUDGETS = [
-  "Under $1k/mo", "$1k – $3k/mo", "$3k – $5k/mo",
-  "$5k – $10k/mo", "$10k+/mo", "Not sure yet",
-];
-
-const SPENDS = [
-  "Nothing yet", "Under $500/mo", "$500 – $2k/mo", "$2k – $5k/mo", "$5k+/mo",
-];
-
-const TOTAL_STEPS = 5;
 
 export default function OnboardingForm() {
   const [step, setStep] = useState(0);
   const [slideDir, setSlideDir] = useState<"right" | "left">("right");
   const [animKey, setAnimKey] = useState(0);
   const [formData, setFormData] = useState<FormData>({
-    businessName: "",
-    industry: "",
-    goals: [],
-    runningAds: null,
-    currentSpend: "",
-    budget: "",
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    website: "",
+    businessName: "", address: "", phone: "", businessHours: "",
+    website: "", facebookUrl: "", instagramUrl: "", country: "",
+    fbBmConfirmed: false,
+    offerName: "", offerPrice: "", offerDescription: "",
+    targetAudience: "", marketingHistory: "", monthlyRevenueTarget: "",
+    legalBusinessName: "", einOrRegNumber: "", smsUseCase: "",
+    sampleMessage1: "", sampleMessage2: "",
   });
 
-  const advance = (dir: "right" | "left", target: number) => {
+  const go = (dir: "right" | "left", target: number) => {
     setSlideDir(dir);
     setAnimKey(k => k + 1);
     setStep(target);
   };
+  const goNext = () => go("right", step + 1);
+  const goBack = () => go("left", step - 1);
 
-  const goNext = () => advance("right", step + 1);
-  const goBack = () => advance("left", step - 1);
-
-  const toggle = (field: "goals", val: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: (prev[field] as string[]).includes(val)
-        ? (prev[field] as string[]).filter(v => v !== val)
-        : [...(prev[field] as string[]), val],
-    }));
-  };
-
-  const set = (field: keyof FormData, val: string | boolean | null) => {
+  const set = <K extends keyof FormData>(field: K, val: FormData[K]) =>
     setFormData(prev => ({ ...prev, [field]: val }));
-  };
 
   const canProceed = (): boolean => {
-    if (step === 1) return formData.businessName.trim().length > 0 && formData.industry.length > 0;
-    if (step === 2) return formData.goals.length > 0;
-    if (step === 3) return formData.runningAds !== null && formData.budget.length > 0;
-    if (step === 4) return formData.firstName.trim().length > 0 && formData.email.includes("@");
+    if (step === 1)
+      return !!formData.businessName.trim() && !!formData.phone.trim() && !!formData.country;
+    if (step === 2) return formData.fbBmConfirmed;
+    if (step === 3)
+      return !!formData.offerName.trim() && !!formData.offerDescription.trim() && !!formData.targetAudience.trim();
+    if (step === 4)
+      return !!formData.legalBusinessName.trim() && !!formData.einOrRegNumber.trim() && !!formData.smsUseCase.trim() && !!formData.sampleMessage1.trim() && !!formData.sampleMessage2.trim();
     return true;
   };
 
-  const progressPct = step === 0 || step > TOTAL_STEPS ? 0 : (step / TOTAL_STEPS) * 100;
+  const progressPct = step >= 1 && step <= TOTAL_STEPS ? (step / TOTAL_STEPS) * 100 : 0;
 
   return (
-    <div className="relative min-h-screen overflow-hidden flex items-center justify-center p-4 py-10"
-      style={{ background: "linear-gradient(135deg, #0D0A1E 0%, #13091F 50%, #080D1E 100%)" }}>
+    <div className="min-h-screen" style={{ background: "#0C0C0C" }}>
+      <div className="max-w-2xl mx-auto px-5 py-10 sm:py-16">
 
-      {/* Background blobs */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="animate-blob absolute w-[600px] h-[600px] opacity-20 -top-32 -left-32"
-          style={{ background: "radial-gradient(circle, #EC4899, transparent 70%)" }} />
-        <div className="animate-blob-d2 absolute w-[500px] h-[500px] opacity-15 -top-16 -right-20"
-          style={{ background: "radial-gradient(circle, #8B5CF6, transparent 70%)" }} />
-        <div className="animate-blob-d4 absolute w-[500px] h-[500px] opacity-15 -bottom-32 left-1/2 -translate-x-1/2"
-          style={{ background: "radial-gradient(circle, #06B6D4, transparent 70%)" }} />
-      </div>
-
-      <div className="relative w-full max-w-xl">
-
-        {/* Progress bar — only show during form steps */}
-        {step > 0 && step <= TOTAL_STEPS && (
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold tracking-widest uppercase"
-                style={{ color: "rgba(255,255,255,0.4)" }}>
-                Step {step} of {TOTAL_STEPS}
-              </span>
-              <span className="text-xs font-semibold" style={{ color: "#EC4899" }}>
-                {Math.round(progressPct)}%
-              </span>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-10">
+          <div className="flex items-center gap-3">
+            <PPMLogo />
+            <div>
+              <div style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 16, color: "#fff", lineHeight: 1 }}>PPM</div>
+              <div className="mono-label" style={{ marginTop: 2 }}>Client Onboarding</div>
             </div>
-            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.08)" }}>
-              <div
-                className="h-full rounded-full transition-all duration-500 ease-out"
-                style={{
-                  width: `${progressPct}%`,
-                  background: "linear-gradient(90deg, #EC4899, #8B5CF6, #06B6D4)",
-                }}
-              />
+          </div>
+          {step > 0 && step <= TOTAL_STEPS && (
+            <div className="mono-label" style={{ color: "rgba(255,255,255,0.3)" }}>
+              {step} / {TOTAL_STEPS}
+            </div>
+          )}
+        </div>
+
+        {/* Progress bar */}
+        {step > 0 && step <= TOTAL_STEPS && (
+          <div className="mb-10">
+            <div style={{ height: 2, background: "rgba(255,255,255,0.07)", borderRadius: 2, overflow: "hidden" }}>
+              <div style={{
+                height: "100%", background: "#A3E635", borderRadius: 2,
+                width: `${progressPct}%`, transition: "width 0.4s ease",
+              }} />
             </div>
           </div>
         )}
 
-        {/* Card */}
-        <div
-          className="rounded-3xl p-8 sm:p-10"
-          style={{
-            background: "rgba(255,255,255,0.04)",
-            border: "1.5px solid rgba(255,255,255,0.09)",
-            backdropFilter: "blur(24px)",
-            boxShadow: "0 32px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04)",
-          }}
-        >
-          <div key={animKey} className={`animate-slide-${slideDir}`}>
+        {/* Animated step container */}
+        <div key={animKey} className={`animate-slide-${slideDir}`}>
 
-            {/* STEP 0: Welcome */}
-            {step === 0 && (
-              <div className="text-center">
-                <div className="animate-float inline-flex items-center justify-center w-20 h-20 rounded-2xl mb-6"
-                  style={{ background: "linear-gradient(135deg, #EC4899, #8B5CF6, #06B6D4)" }}>
-                  <svg width="40" height="40" viewBox="0 0 24 24" fill="white" aria-hidden="true">
-                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-                  </svg>
-                </div>
-                <div className="mb-2 text-sm font-semibold tracking-[0.2em] uppercase"
-                  style={{ color: "#EC4899" }}>
-                  Power Performance Marketing
-                </div>
-                <h1 className="text-4xl sm:text-5xl font-black leading-tight mb-4"
-                  style={{ fontFamily: 'var(--font-heading), sans-serif' }}>
-                  <span className="gradient-text">Let&apos;s build your</span>
-                  <br />marketing machine.
-                </h1>
-                <p className="text-lg mb-8 leading-relaxed" style={{ color: "rgba(255,255,255,0.55)" }}>
-                  Takes 2 minutes. We&apos;ll do the rest.
-                </p>
-                <button onClick={goNext} className="btn-primary w-full py-4 rounded-2xl text-white font-bold text-lg cursor-pointer flex items-center justify-center gap-2">
-                  Let&apos;s go
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M5 12h14M12 5l7 7-7 7"/>
-                  </svg>
-                </button>
-              </div>
-            )}
+          {/* ── STEP 0: Welcome ── */}
+          {step === 0 && (
+            <div className="animate-fade-up">
+              <div className="mono-label-green mb-4">Component 02 · Client Onboarding Funnel</div>
+              <h1 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "clamp(36px, 6vw, 56px)", lineHeight: 1.05, color: "#fff", marginBottom: 20 }}>
+                Everything we need.<br />
+                <span style={{ color: "#A3E635" }}>Before the call.</span>
+              </h1>
+              <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 16, lineHeight: 1.7, maxWidth: 480, marginBottom: 40 }}>
+                Complete this form before your onboarding call. It takes around 5 minutes and lets us skip the setup questions — so we can hit the ground running from minute one.
+              </p>
 
-            {/* STEP 1: Business Info */}
-            {step === 1 && (
-              <div>
-                <StepLabel>01 — Your Business</StepLabel>
-                <h2 className="text-3xl font-black mb-1" style={{ fontFamily: 'var(--font-heading), sans-serif' }}>
-                  Tell us about <span className="gradient-text">your biz</span>
-                </h2>
-                <p className="text-sm mb-7" style={{ color: "rgba(255,255,255,0.45)" }}>What are we working with?</p>
-
-                <label className="block text-sm font-semibold mb-2" style={{ color: "rgba(255,255,255,0.7)" }}>
-                  Business Name
-                </label>
-                <input
-                  className="form-input w-full rounded-xl px-4 py-3.5 text-base mb-6"
-                  placeholder="e.g. Acme Fitness Co."
-                  value={formData.businessName}
-                  onChange={e => set("businessName", e.target.value)}
-                  autoFocus
-                />
-
-                <label className="block text-sm font-semibold mb-3" style={{ color: "rgba(255,255,255,0.7)" }}>
-                  Industry
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  {INDUSTRIES.map(ind => (
-                    <button
-                      key={ind}
-                      onClick={() => set("industry", ind)}
-                      className={`pill-option rounded-xl px-3 py-2.5 text-sm font-medium text-left cursor-pointer${formData.industry === ind ? " selected" : ""}`}
-                    >
-                      {ind}
-                    </button>
-                  ))}
-                </div>
-
-                <StepNav onBack={goBack} onNext={goNext} canNext={canProceed()} />
-              </div>
-            )}
-
-            {/* STEP 2: Goals */}
-            {step === 2 && (
-              <div>
-                <StepLabel>02 — Goals</StepLabel>
-                <h2 className="text-3xl font-black mb-1" style={{ fontFamily: 'var(--font-heading), sans-serif' }}>
-                  What do you want <span className="gradient-text">to crush?</span>
-                </h2>
-                <p className="text-sm mb-7" style={{ color: "rgba(255,255,255,0.45)" }}>Pick everything that applies.</p>
-
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                  {GOALS.map(goal => (
-                    <button
-                      key={goal}
-                      onClick={() => toggle("goals", goal)}
-                      className={`pill-option rounded-xl px-3 py-3 text-sm font-medium text-center cursor-pointer${formData.goals.includes(goal) ? " selected" : ""}`}
-                    >
-                      {goal}
-                    </button>
-                  ))}
-                </div>
-
-                <StepNav onBack={goBack} onNext={goNext} canNext={canProceed()} />
-              </div>
-            )}
-
-            {/* STEP 3: Budget & Situation */}
-            {step === 3 && (
-              <div>
-                <StepLabel>03 — Budget</StepLabel>
-                <h2 className="text-3xl font-black mb-1" style={{ fontFamily: 'var(--font-heading), sans-serif' }}>
-                  Let&apos;s talk <span className="gradient-text">numbers</span>
-                </h2>
-                <p className="text-sm mb-7" style={{ color: "rgba(255,255,255,0.45)" }}>No judgment — every budget is a starting point.</p>
-
-                <label className="block text-sm font-semibold mb-3" style={{ color: "rgba(255,255,255,0.7)" }}>
-                  Are you currently running ads?
-                </label>
-                <div className="flex gap-3 mb-6">
-                  {[{ label: "Yes, I am", val: true }, { label: "Not yet", val: false }].map(opt => (
-                    <button
-                      key={String(opt.val)}
-                      onClick={() => set("runningAds", opt.val)}
-                      className={`pill-option flex-1 rounded-xl px-4 py-3 text-sm font-semibold cursor-pointer${formData.runningAds === opt.val ? " selected" : ""}`}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-
-                {formData.runningAds && (
-                  <div className="mb-6">
-                    <label className="block text-sm font-semibold mb-3" style={{ color: "rgba(255,255,255,0.7)" }}>
-                      Current monthly ad spend
-                    </label>
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                      {SPENDS.map(s => (
-                        <button
-                          key={s}
-                          onClick={() => set("currentSpend", s)}
-                          className={`pill-option rounded-xl px-3 py-2.5 text-sm font-medium cursor-pointer${formData.currentSpend === s ? " selected" : ""}`}
-                        >
-                          {s}
-                        </button>
-                      ))}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1, background: "rgba(255,255,255,0.07)", borderRadius: 8, overflow: "hidden", marginBottom: 40 }}>
+                {[
+                  { step: "01", label: "Business Info", time: "30 sec" },
+                  { step: "02", label: "Facebook Access", time: "Critical" },
+                  { step: "03", label: "Offer & Marketing", time: "2 min" },
+                  { step: "04", label: "A2P Information", time: "90 sec" },
+                ].map((s) => (
+                  <div key={s.step} style={{ background: "#111111", padding: "16px 20px" }}>
+                    <div className="mono-label-green" style={{ marginBottom: 4 }}>
+                      {s.step} · {s.time}
                     </div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: "#fff" }}>{s.label}</div>
                   </div>
-                )}
+                ))}
+              </div>
 
-                <label className="block text-sm font-semibold mb-3" style={{ color: "rgba(255,255,255,0.7)" }}>
-                  Monthly marketing budget
-                </label>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                  {BUDGETS.map(b => (
-                    <button
-                      key={b}
-                      onClick={() => set("budget", b)}
-                      className={`pill-option rounded-xl px-3 py-2.5 text-sm font-medium cursor-pointer${formData.budget === b ? " selected" : ""}`}
-                    >
-                      {b}
-                    </button>
+              <button className="ppm-btn" style={{ width: "100%" }} onClick={goNext}>
+                Start
+                <ArrowRight />
+              </button>
+            </div>
+          )}
+
+          {/* ── STEP 1: Business Information ── */}
+          {step === 1 && (
+            <div>
+              <div className="mono-label-green mb-1">Step 01 · 30 seconds</div>
+              <h2 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "clamp(28px, 5vw, 42px)", lineHeight: 1.1, color: "#fff", marginBottom: 6 }}>
+                Business Information
+              </h2>
+              <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 14, marginBottom: 32 }}>
+                Name, address, phone, hours, website, socials, country.
+              </p>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                <Field label="Business Name" required>
+                  <input className="ppm-input" placeholder="e.g. Acme Fitness" value={formData.businessName}
+                    onChange={e => set("businessName", e.target.value)} autoFocus />
+                </Field>
+
+                <Field label="Address">
+                  <input className="ppm-input" placeholder="Street, City, Postcode / Zip"
+                    value={formData.address} onChange={e => set("address", e.target.value)} />
+                </Field>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  <Field label="Phone Number" required>
+                    <input className="ppm-input" placeholder="+44 7700 000000" type="tel"
+                      value={formData.phone} onChange={e => set("phone", e.target.value)} />
+                  </Field>
+                  <Field label="Business Hours">
+                    <input className="ppm-input" placeholder="e.g. Mon–Fri, 9–5"
+                      value={formData.businessHours} onChange={e => set("businessHours", e.target.value)} />
+                  </Field>
+                </div>
+
+                <Field label="Website">
+                  <input className="ppm-input" placeholder="https://yourwebsite.com" type="url"
+                    value={formData.website} onChange={e => set("website", e.target.value)} />
+                </Field>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  <Field label="Facebook URL">
+                    <input className="ppm-input" placeholder="facebook.com/yourpage"
+                      value={formData.facebookUrl} onChange={e => set("facebookUrl", e.target.value)} />
+                  </Field>
+                  <Field label="Instagram URL">
+                    <input className="ppm-input" placeholder="instagram.com/yourhandle"
+                      value={formData.instagramUrl} onChange={e => set("instagramUrl", e.target.value)} />
+                  </Field>
+                </div>
+
+                <Field label="Country" required>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    {(["UK", "US"] as const).map(c => (
+                      <button key={c} className={`ppm-pill${formData.country === c ? " active" : ""}`}
+                        style={{ flex: 1 }} onClick={() => set("country", c)}>
+                        {c}
+                      </button>
+                    ))}
+                  </div>
+                </Field>
+              </div>
+
+              <StepNav onBack={goBack} onNext={goNext} canNext={canProceed()} />
+            </div>
+          )}
+
+          {/* ── STEP 2: Facebook Business Manager ── */}
+          {step === 2 && (
+            <div>
+              <div className="mono-label-green mb-1">Step 02 · Critical</div>
+              <h2 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "clamp(28px, 5vw, 42px)", lineHeight: 1.1, color: "#fff", marginBottom: 6 }}>
+                Facebook Business<br />Manager Access
+              </h2>
+              <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 14, marginBottom: 28 }}>
+                This is the step that eats half of every onboarding call. Complete it now and we skip it entirely.
+              </p>
+
+              <div style={{ background: "#111111", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "20px 24px", marginBottom: 24 }}>
+                <div className="mono-label" style={{ marginBottom: 16 }}>Step-by-step instructions</div>
+                <ol style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 12 }}>
+                  {FB_BM_STEPS.map((instruction, i) => (
+                    <li key={i} style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "#A3E635", minWidth: 20, paddingTop: 2 }}>
+                        {String(i + 1).padStart(2, "0")}
+                      </span>
+                      <span style={{ fontSize: 14, color: "rgba(255,255,255,0.75)", lineHeight: 1.6 }}>{instruction}</span>
+                    </li>
                   ))}
-                </div>
-
-                <StepNav onBack={goBack} onNext={goNext} canNext={canProceed()} />
+                </ol>
               </div>
-            )}
 
-            {/* STEP 4: Contact */}
-            {step === 4 && (
-              <div>
-                <StepLabel>04 — Contact</StepLabel>
-                <h2 className="text-3xl font-black mb-1" style={{ fontFamily: 'var(--font-heading), sans-serif' }}>
-                  Last step — <span className="gradient-text">who are you?</span>
-                </h2>
-                <p className="text-sm mb-7" style={{ color: "rgba(255,255,255,0.45)" }}>We&apos;ll reach out within 24 hours.</p>
-
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  <div>
-                    <label className="block text-sm font-semibold mb-2" style={{ color: "rgba(255,255,255,0.7)" }}>First Name *</label>
-                    <input className="form-input w-full rounded-xl px-4 py-3.5 text-base"
-                      placeholder="Jane"
-                      value={formData.firstName}
-                      onChange={e => set("firstName", e.target.value)}
-                      autoFocus />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold mb-2" style={{ color: "rgba(255,255,255,0.7)" }}>Last Name</label>
-                    <input className="form-input w-full rounded-xl px-4 py-3.5 text-base"
-                      placeholder="Smith"
-                      value={formData.lastName}
-                      onChange={e => set("lastName", e.target.value)} />
-                  </div>
+              <div style={{ background: "rgba(163,230,53,0.07)", border: "1px solid rgba(163,230,53,0.2)", borderRadius: 8, padding: "16px 20px", marginBottom: 28 }}>
+                <div style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", marginBottom: 2 }} className="mono-label">PPM Business Manager ID</div>
+                <div style={{ fontFamily: "var(--font-mono)", fontSize: 16, color: "#A3E635", letterSpacing: "0.05em" }}>
+                  123456789
                 </div>
-
-                <div className="mb-4">
-                  <label className="block text-sm font-semibold mb-2" style={{ color: "rgba(255,255,255,0.7)" }}>Email *</label>
-                  <input className="form-input w-full rounded-xl px-4 py-3.5 text-base"
-                    type="email"
-                    placeholder="jane@acmefitness.com"
-                    value={formData.email}
-                    onChange={e => set("email", e.target.value)} />
-                </div>
-
-                <div className="mb-4">
-                  <label className="block text-sm font-semibold mb-2" style={{ color: "rgba(255,255,255,0.7)" }}>Phone</label>
-                  <input className="form-input w-full rounded-xl px-4 py-3.5 text-base"
-                    type="tel"
-                    placeholder="+61 400 000 000"
-                    value={formData.phone}
-                    onChange={e => set("phone", e.target.value)} />
-                </div>
-
-                <div className="mb-6">
-                  <label className="block text-sm font-semibold mb-2" style={{ color: "rgba(255,255,255,0.7)" }}>Website <span style={{ color: "rgba(255,255,255,0.3)" }}>(optional)</span></label>
-                  <input className="form-input w-full rounded-xl px-4 py-3.5 text-base"
-                    type="url"
-                    placeholder="https://acmefitness.com"
-                    value={formData.website}
-                    onChange={e => set("website", e.target.value)} />
-                </div>
-
-                <button
-                  onClick={goNext}
-                  disabled={!canProceed()}
-                  className="btn-primary w-full py-4 rounded-2xl text-white font-bold text-lg cursor-pointer flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none"
-                >
-                  Submit
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M5 12h14M12 5l7 7-7 7"/>
-                  </svg>
-                </button>
-                <button onClick={goBack} className="w-full mt-3 py-3 rounded-2xl text-sm font-semibold cursor-pointer transition-colors"
-                  style={{ color: "rgba(255,255,255,0.4)" }}
-                  onMouseEnter={e => (e.currentTarget.style.color = "white")}
-                  onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.4)")}>
-                  Go back
-                </button>
               </div>
-            )}
 
-            {/* STEP 5: Success */}
-            {step === 5 && (
-              <div className="text-center py-4">
-                <div className="relative inline-block mb-8">
-                  <div className="animate-pulse-ring absolute inset-0 rounded-full"
-                    style={{ background: "rgba(236,72,153,0.2)" }} />
-                  <div className="animate-bounce-in relative flex items-center justify-center w-24 h-24 rounded-full mx-auto"
-                    style={{ background: "linear-gradient(135deg, #EC4899, #8B5CF6, #06B6D4)" }}>
-                    <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <polyline points="20 6 9 17 4 12" />
+              <label style={{ display: "flex", gap: 14, alignItems: "flex-start", cursor: "pointer" }}>
+                <div
+                  onClick={() => set("fbBmConfirmed", !formData.fbBmConfirmed)}
+                  style={{
+                    width: 20, height: 20, minWidth: 20, borderRadius: 4, marginTop: 1,
+                    border: `1px solid ${formData.fbBmConfirmed ? "#A3E635" : "rgba(255,255,255,0.2)"}`,
+                    background: formData.fbBmConfirmed ? "#A3E635" : "transparent",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    transition: "all 0.15s ease", cursor: "pointer",
+                  }}>
+                  {formData.fbBmConfirmed && (
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                      <polyline points="2,6 5,9 10,3" stroke="#0C0C0C" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
-                  </div>
+                  )}
+                </div>
+                <span style={{ fontSize: 14, color: "rgba(255,255,255,0.65)", lineHeight: 1.6 }}>
+                  I&apos;ve granted PPM access to my Facebook Business Manager
+                </span>
+              </label>
+
+              <StepNav onBack={goBack} onNext={goNext} canNext={canProceed()} />
+            </div>
+          )}
+
+          {/* ── STEP 3: Offer & Marketing ── */}
+          {step === 3 && (
+            <div>
+              <div className="mono-label-green mb-1">Step 03 · 2 minutes</div>
+              <h2 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "clamp(28px, 5vw, 42px)", lineHeight: 1.1, color: "#fff", marginBottom: 6 }}>
+                Offer & Marketing
+              </h2>
+              <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 14, marginBottom: 32 }}>
+                Offer name, price, description, target audience, marketing history, revenue target.
+              </p>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  <Field label="Offer Name" required>
+                    <input className="ppm-input" placeholder="e.g. 12-Week Transformation"
+                      value={formData.offerName} onChange={e => set("offerName", e.target.value)} autoFocus />
+                  </Field>
+                  <Field label="Offer Price">
+                    <input className="ppm-input" placeholder="e.g. £2,000 / £197/mo"
+                      value={formData.offerPrice} onChange={e => set("offerPrice", e.target.value)} />
+                  </Field>
                 </div>
 
-                <h2 className="text-4xl font-black mb-3" style={{ fontFamily: 'var(--font-heading), sans-serif' }}>
-                  <span className="gradient-text">You&apos;re in!</span>
-                </h2>
-                <p className="text-lg mb-8 leading-relaxed" style={{ color: "rgba(255,255,255,0.6)" }}>
-                  Thanks, <strong style={{ color: "white" }}>{formData.firstName || "friend"}</strong>. We&apos;ll
-                  review your details and reach out within <strong style={{ color: "#06B6D4" }}>24 hours</strong>.
-                </p>
+                <Field label="Offer Description" required>
+                  <textarea className="ppm-input" placeholder="What does your offer include? What problem does it solve?"
+                    rows={3} value={formData.offerDescription}
+                    onChange={e => set("offerDescription", e.target.value)}
+                    style={{ resize: "vertical" }} />
+                </Field>
 
-                {/* Summary */}
-                <div className="rounded-2xl p-5 text-left space-y-3 mb-6"
-                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                  {[
-                    { label: "Business", value: formData.businessName },
-                    { label: "Industry", value: formData.industry },
-                    { label: "Goals", value: formData.goals.join(", ") },
-                    { label: "Budget", value: formData.budget },
-                  ].filter(r => r.value).map(row => (
-                    <div key={row.label} className="flex justify-between items-start gap-4">
-                      <span className="text-sm" style={{ color: "rgba(255,255,255,0.4)", minWidth: 72 }}>{row.label}</span>
-                      <span className="text-sm font-semibold text-right">{row.value}</span>
-                    </div>
-                  ))}
-                </div>
+                <Field label="Target Audience" required>
+                  <textarea className="ppm-input" placeholder="Who is your ideal client? Age, location, situation, pain points."
+                    rows={3} value={formData.targetAudience}
+                    onChange={e => set("targetAudience", e.target.value)}
+                    style={{ resize: "vertical" }} />
+                </Field>
 
-                <p className="text-sm" style={{ color: "rgba(255,255,255,0.3)" }}>
-                  Questions? Reach us at{" "}
-                  <span style={{ color: "#EC4899" }}>hello@ppm.com.au</span>
-                </p>
+                <Field label="Marketing History">
+                  <textarea className="ppm-input" placeholder="Have you run ads before? What worked, what didn't?"
+                    rows={2} value={formData.marketingHistory}
+                    onChange={e => set("marketingHistory", e.target.value)}
+                    style={{ resize: "vertical" }} />
+                </Field>
+
+                <Field label="Monthly Revenue Target">
+                  <input className="ppm-input" placeholder="e.g. £30,000 / month"
+                    value={formData.monthlyRevenueTarget}
+                    onChange={e => set("monthlyRevenueTarget", e.target.value)} />
+                </Field>
               </div>
-            )}
 
-          </div>
+              <StepNav onBack={goBack} onNext={goNext} canNext={canProceed()} />
+            </div>
+          )}
+
+          {/* ── STEP 4: A2P Information ── */}
+          {step === 4 && (
+            <div>
+              <div className="mono-label-green mb-1">Step 04 · 90 seconds</div>
+              <h2 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "clamp(28px, 5vw, 42px)", lineHeight: 1.1, color: "#fff", marginBottom: 6 }}>
+                A2P Information
+              </h2>
+              <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 14, marginBottom: 16 }}>
+                Required for SMS compliance. Used to register your brand with carriers.
+              </p>
+              <div style={{ background: "#111111", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 6, padding: "12px 16px", marginBottom: 28 }}>
+                <span className="mono-label">
+                  {formData.country === "UK" ? "UK · Regulatory bundle required" : "US · A2P 10DLC registration"}
+                </span>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                <Field label="Legal Business Name" required>
+                  <input className="ppm-input" placeholder="Registered legal name (not trading name)"
+                    value={formData.legalBusinessName}
+                    onChange={e => set("legalBusinessName", e.target.value)} autoFocus />
+                </Field>
+
+                <Field label={formData.country === "UK" ? "Company Registration Number" : "EIN (Tax ID)"} required>
+                  <input className="ppm-input"
+                    placeholder={formData.country === "UK" ? "e.g. 12345678" : "e.g. 12-3456789"}
+                    value={formData.einOrRegNumber}
+                    onChange={e => set("einOrRegNumber", e.target.value)} />
+                </Field>
+
+                <Field label="SMS Use Case Description" required>
+                  <textarea className="ppm-input"
+                    placeholder="Describe how you'll use SMS. e.g. 'Appointment reminders and follow-ups for fitness coaching clients who have opted in.'"
+                    rows={3} value={formData.smsUseCase}
+                    onChange={e => set("smsUseCase", e.target.value)}
+                    style={{ resize: "vertical" }} />
+                </Field>
+
+                <Field label="Sample Message 1" required>
+                  <textarea className="ppm-input"
+                    placeholder="e.g. 'Hi [Name], your call with us is tomorrow at 2pm. Reply STOP to opt out.'"
+                    rows={2} value={formData.sampleMessage1}
+                    onChange={e => set("sampleMessage1", e.target.value)}
+                    style={{ resize: "vertical" }} />
+                </Field>
+
+                <Field label="Sample Message 2" required>
+                  <textarea className="ppm-input"
+                    placeholder="e.g. 'Hey [Name], just checking in — are you still interested in [Offer]? Reply STOP to opt out.'"
+                    rows={2} value={formData.sampleMessage2}
+                    onChange={e => set("sampleMessage2", e.target.value)}
+                    style={{ resize: "vertical" }} />
+                </Field>
+              </div>
+
+              <div style={{ display: "flex", gap: 10, marginTop: 32 }}>
+                <button className="ppm-btn-ghost" onClick={goBack}>Back</button>
+                <button className="ppm-btn" style={{ flex: 1 }} onClick={goNext} disabled={!canProceed()}>
+                  Submit
+                  <ArrowRight />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ── STEP 5: Done ── */}
+          {step === 5 && (
+            <div className="animate-fade-up" style={{ textAlign: "center", paddingTop: 16, paddingBottom: 16 }}>
+              <div className="animate-check-pop" style={{
+                width: 72, height: 72, borderRadius: "50%",
+                background: "#A3E635", display: "flex",
+                alignItems: "center", justifyContent: "center",
+                margin: "0 auto 28px",
+              }}>
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+                  <polyline points="7,17 13,23 25,10" stroke="#0C0C0C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+
+              <div className="mono-label-green" style={{ marginBottom: 12 }}>Step 05 · Confirmation</div>
+              <h2 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: "clamp(30px, 5vw, 44px)", lineHeight: 1.1, color: "#fff", marginBottom: 16 }}>
+                Done — see you<br />on the call.
+              </h2>
+              <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 15, lineHeight: 1.7, maxWidth: 420, margin: "0 auto 36px" }}>
+                All your details have been submitted. Make sure this is completed before your onboarding call so we can skip the setup and get straight into it.
+              </p>
+
+              <div style={{ background: "#111111", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "20px 24px", textAlign: "left", marginBottom: 28 }}>
+                <div className="mono-label" style={{ marginBottom: 16 }}>Submitted</div>
+                {([
+                  { label: "Business", value: formData.businessName },
+                  { label: "Country", value: formData.country },
+                  { label: "Offer", value: formData.offerName },
+                  { label: "Legal name", value: formData.legalBusinessName },
+                  { label: "FB Access", value: formData.fbBmConfirmed ? "Granted" : "—" },
+                ] as { label: string; value: string }[]).filter(r => r.value).map(row => (
+                  <div key={row.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <span style={{ fontSize: 12, fontFamily: "var(--font-mono)", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.05em" }}>{row.label}</span>
+                    <span style={{ fontSize: 14, fontWeight: 500, color: "#fff" }}>{row.value}</span>
+                  </div>
+                ))}
+              </div>
+
+              <p style={{ fontSize: 13, color: "rgba(255,255,255,0.25)", fontFamily: "var(--font-mono)" }}>
+                Questions? hello@ppm.com.au
+              </p>
+            </div>
+          )}
+
         </div>
       </div>
     </div>
   );
 }
 
-function StepLabel({ children }: { children: React.ReactNode }) {
+/* ── Sub-components ── */
+
+function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return (
-    <div className="text-xs font-bold tracking-[0.2em] uppercase mb-3"
-      style={{ color: "#EC4899" }}>
+    <div>
+      <label className="field-label">
+        {label}{required && <span>*</span>}
+      </label>
       {children}
     </div>
   );
@@ -432,26 +456,28 @@ function StepLabel({ children }: { children: React.ReactNode }) {
 
 function StepNav({ onBack, onNext, canNext }: { onBack: () => void; onNext: () => void; canNext: boolean }) {
   return (
-    <div className="flex gap-3 mt-8">
-      <button
-        onClick={onBack}
-        className="py-3.5 px-5 rounded-2xl text-sm font-semibold cursor-pointer transition-all"
-        style={{ background: "rgba(255,255,255,0.07)", border: "1.5px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)" }}
-        onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; e.currentTarget.style.color = "white"; }}
-        onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.07)"; e.currentTarget.style.color = "rgba(255,255,255,0.6)"; }}
-      >
-        Back
-      </button>
-      <button
-        onClick={onNext}
-        disabled={!canNext}
-        className="btn-primary flex-1 py-3.5 rounded-2xl text-white font-bold cursor-pointer flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
-      >
+    <div style={{ display: "flex", gap: 10, marginTop: 32 }}>
+      <button className="ppm-btn-ghost" onClick={onBack}>Back</button>
+      <button className="ppm-btn" style={{ flex: 1 }} onClick={onNext} disabled={!canNext}>
         Continue
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M5 12h14M12 5l7 7-7 7"/>
-        </svg>
+        <ArrowRight />
       </button>
     </div>
+  );
+}
+
+function PPMLogo() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-label="PPM">
+      <rect x="6" y="6" width="16" height="16" transform="rotate(45 14 14)" fill="#A3E635" />
+    </svg>
+  );
+}
+
+function ArrowRight() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M5 12h14M12 5l7 7-7 7" />
+    </svg>
   );
 }
