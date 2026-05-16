@@ -1,38 +1,36 @@
 import type { Metadata } from "next";
-import { Space_Grotesk, Space_Mono, Inter } from "next/font/google";
+import { Bricolage_Grotesque, Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-const spaceGrotesk = Space_Grotesk({
+const bricolage = Bricolage_Grotesque({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
-  variable: "--font-heading",
+  variable: "--font-display",
   display: "swap",
 });
 
-const spaceMono = Space_Mono({
+const geist = Geist({
   subsets: ["latin"],
-  weight: ["400", "700"],
+  variable: "--font-sans",
+  display: "swap",
+});
+
+const geistMono = Geist_Mono({
+  subsets: ["latin"],
   variable: "--font-mono",
   display: "swap",
 });
 
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  variable: "--font-body",
-  display: "swap",
-});
-
 export const metadata: Metadata = {
-  title: "PPM — Client Onboarding",
-  description: "Power Performance Marketing client onboarding form.",
+  title: "PPM · Client Setup",
+  description: "Power Performance Marketing — pre-kickoff client onboarding.",
 };
 
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${spaceGrotesk.variable} ${spaceMono.variable} ${inter.variable}`}>
+    <html lang="en" className={`${bricolage.variable} ${geist.variable} ${geistMono.variable}`}>
       <body>{children}</body>
     </html>
   );
