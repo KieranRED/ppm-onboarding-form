@@ -24,6 +24,7 @@ export default function OnboardingForm() {
   const [dir, setDir]         = useState<"right" | "left">("right");
   const [submitting, setSubmitting] = useState(false);
 
+  const [customThreshold, setCustomThreshold] = useState(false);
   const formAreaRef = useRef<HTMLDivElement>(null);
 
   const [data, setData] = useState<FormData>({
@@ -349,14 +350,44 @@ export default function OnboardingForm() {
                         <button
                           key={opt.value}
                           type="button"
-                          className={`threshold-btn${data.showRateThreshold === opt.value ? " selected" : ""}`}
-                          onClick={() => set("showRateThreshold", data.showRateThreshold === opt.value ? "" : opt.value)}
+                          className={`threshold-btn${!customThreshold && data.showRateThreshold === opt.value ? " selected" : ""}`}
+                          onClick={() => {
+                            setCustomThreshold(false);
+                            set("showRateThreshold", !customThreshold && data.showRateThreshold === opt.value ? "" : opt.value);
+                          }}
                         >
                           <span className="threshold-pct">{opt.label}</span>
                           <span className="threshold-sub">{opt.sub}</span>
                         </button>
                       ))}
+                      <button
+                        type="button"
+                        className={`threshold-btn${customThreshold ? " selected" : ""}`}
+                        onClick={() => {
+                          setCustomThreshold(true);
+                          set("showRateThreshold", "");
+                        }}
+                      >
+                        <span className="threshold-pct" style={{ fontSize: 16 }}>Custom</span>
+                        <span className="threshold-sub">Any %</span>
+                      </button>
                     </div>
+                    {customThreshold && (
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10 }}>
+                        <input
+                          className="ppm-input"
+                          type="number"
+                          placeholder="e.g. 40"
+                          min={1}
+                          max={99}
+                          autoFocus
+                          style={{ maxWidth: 100 }}
+                          value={data.showRateThreshold}
+                          onChange={e => set("showRateThreshold", e.target.value)}
+                        />
+                        <span style={{ fontSize: 13, color: "var(--ink-500)" }}>%</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -366,18 +397,15 @@ export default function OnboardingForm() {
                 <button className="btn btn-ghost" onClick={() => go(2, "left")}>
                   <ArrowLeft /> Back
                 </button>
-                <div className="nav-end">
-                  <button
-                    className="btn btn-primary"
-                    onClick={handleSubmit}
-                    disabled={!canAdvance() || submitting}
-                  >
-                    {submitting
-                      ? <><span className="spin" aria-hidden="true" /> Sending…</>
-                      : <>Send to build team <ArrowRight /></>}
-                  </button>
-                  <span className="nav-hint">Reviewed within 24 hours</span>
-                </div>
+                <button
+                  className="btn btn-primary"
+                  onClick={handleSubmit}
+                  disabled={!canAdvance() || submitting}
+                >
+                  {submitting
+                    ? <><span className="spin" aria-hidden="true" /> Sending…</>
+                    : <>Send to build team <ArrowRight /></>}
+                </button>
               </div>
             </div>
           )}
