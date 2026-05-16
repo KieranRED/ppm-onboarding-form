@@ -433,6 +433,58 @@ textarea.ppm-input {
 .success-row p { font-size: 13px; color: var(--ink-700); line-height: 1.6; }
 .success-row p strong { color: var(--ink-900); font-weight: 600; }
 
+/* ── Chip input ── */
+.chip-wrap {
+  display: flex; flex-wrap: wrap; align-items: center;
+  gap: 6px; padding: 7px 10px;
+  background: var(--paper);
+  border: 1px solid var(--rule); border-radius: 6px;
+  cursor: text; min-height: 44px;
+  transition: border-color var(--t-fast), box-shadow var(--t-fast);
+}
+.chip-wrap:focus-within {
+  border-color: var(--ink-900);
+  box-shadow:
+    0 0 0 2px var(--paper),
+    0 0 0 4px color-mix(in oklch, var(--volt) 55%, transparent);
+}
+.chip-wrap input {
+  border: none !important; box-shadow: none !important;
+  height: 26px; padding: 0 !important;
+  flex: 1; min-width: 120px;
+  background: transparent; font: inherit;
+  font-size: 14px; color: var(--ink-900); outline: none;
+}
+.chip-wrap input::placeholder { color: var(--ink-300); }
+
+@keyframes chipIn {
+  0%   { opacity: 0; transform: scale(0.82); }
+  60%  { transform: scale(1.04); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  height: 26px; padding: 0 5px 0 9px;
+  background: color-mix(in oklch, var(--volt) 14%, var(--paper));
+  border: 1px solid color-mix(in oklch, var(--volt) 40%, transparent);
+  border-radius: 999px;
+  font-size: 12px; font-weight: 500; color: var(--volt-ink);
+  flex-shrink: 0; white-space: nowrap;
+  animation: chipIn 240ms var(--ease-out);
+}
+.chip-x {
+  display: grid; place-items: center;
+  width: 17px; height: 17px; border-radius: 50%;
+  border: none; background: none; cursor: pointer;
+  color: var(--volt-ink); opacity: .55;
+  transition: background var(--t-fast), opacity var(--t-fast);
+  padding: 0; flex-shrink: 0;
+}
+.chip-x:hover {
+  background: color-mix(in oklch, var(--volt-ink) 12%, transparent);
+  opacity: 1;
+}
+
 /* ── Spinner ── */
 @keyframes spin { to { transform: rotate(360deg); } }
 .spin {
